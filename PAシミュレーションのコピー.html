@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>YUSHIN パレタイジング簡易シミュレーター</title>
+<style>
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Yu Gothic",sans-serif;background:#f5f7fb;color:#1f2937}
+.wrap{max-width:980px;margin:auto;padding:20px}
+.box{background:#fff;border:1px solid #dbe2ea;border-radius:18px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,.06)}
+.hero{display:flex;gap:16px;align-items:center;margin-bottom:18px}
+.logo{width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#c60018,#930012);color:#fff;display:grid;place-items:center;font-weight:800}
+h1{font-size:26px;margin:0 0 4px} p{margin:0;color:#6b7280}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+label{display:block;font-size:13px;font-weight:700;margin:0 0 6px}
+input,select,button{width:100%;padding:12px;border-radius:12px;font-size:15px;box-sizing:border-box}
+input,select{border:1px solid #cfd8e3}
+button{border:0;font-weight:700;cursor:pointer}
+.btn{background:linear-gradient(135deg,#c60018,#930012);color:#fff}
+.sub{background:#eef2f7;color:#1f2937;margin-top:8px}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.full{grid-column:1/-1}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.card{border:1px solid #dbe2ea;border-radius:14px;padding:14px;background:#fbfcfe}
+.small{font-size:12px;color:#6b7280}
+.big{font-size:28px;font-weight:800}
+.status{border-radius:14px;padding:14px;font-weight:700;margin-bottom:12px}
+.ok{background:#ecfdf5;color:#065f46}.ng{background:#fef2f2;color:#991b1b}.warn{background:#fffbeb;color:#92400e}
+.row{display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid #dbe2ea;border-radius:12px;margin-top:8px}
+.note{margin-top:14px;padding:12px;border:1px dashed #cfd8e3;border-radius:12px;font-size:12px;color:#6b7280;background:#fafafa;line-height:1.7}
+@media (max-width:760px){.grid,.form,.cards{grid-template-columns:1fr}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="box hero">
+    <div class="logo">Y</div>
+    <div>
+      <h1>YUSHIN パレタイジング簡易シミュレーター</h1>
+      <p>営業用の簡易デモ版です。箱条件とパレット条件から概算結果を返します。</p>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="box">
+      <h2 style="margin-top:0">入力条件</h2>
+      <div class="form">
+        <div><label>箱幅 W (mm)</label><input id="boxW" type="number" value="300"></div>
+        <div><label>箱奥行 D (mm)</label><input id="boxD" type="number" value="200"></div>
+        <div><label>箱高さ H (mm)</label><input id="boxH" type="number" value="180"></div>
+        <div><label>箱重量 (kg)</label><input id="boxWeight" type="number" step="0.1" value="7.5"></div>
+        <div><label>パレット幅 (mm)</label><input id="palletW" type="number" value="1100"></div>
+        <div><label>パレット奥行 (mm)</label><input id="palletD" type="number" value="1100"></div>
+        <div><label>最大積載高さ (mm)</label><input id="maxHeight" type="number" value="1400"></div>
+        <div><label>希望段数</label><input id="requestedLayers" type="number" value="5"></div>
+        <div><label>箱の90°回転</label><select id="allowRotate"><option value="yes">許可する</option><option value="no">許可しない</option></select></div>
+        <div><label>積み付けパターン</label><select id="pattern"><option value="best">最適優先</option><option value="same">同一方向のみ</option></select></div>
+        <div class="full small">※概算用です。正式判定にはハンド仕様、干渉、ストローク、安全率などの確認が必要です。</div>
+      </div>
+      <button class="btn" onclick="calc()">再計算する</button>
+      <button class="sub" onclick="resetSample()">サンプル条件に戻す</button>
+    </div>
+
+    <div class="box">
+      <h2 style="margin-top:0">計算結果</h2>
+      <div id="status" class="status warn">条件を入力すると結果が表示されます。</div>
+
+      <div class="cards">
+        <div class="card"><div class="small">1段あたり個数</div><div class="big" id="perLayer">-</div></div>
+        <div class="card"><div class="small">最大段数</div><div class="big" id="maxLayers">-</div></div>
+        <div class="card"><div class="small">総積載数</div><div class="big" id="totalCount">-</div></div>
+        <div class="card"><div class="small">推奨機種</div><div class="big" id="machineName" style="font-size:22px">-</div></div>
+      </div>
+
+      <div class="row"><span class="small">採用レイアウト</span><strong id="layoutLabel">-</strong></div>
+      <div class="row"><span class="small">箱回転</span><strong id="rotationLabel">-</strong></div>
+      <div class="row"><span class="small">高さ判定</span><strong id="heightJudge">-</strong></div>
+      <div class="row"><span class="small">重量判定</span><strong id="weightJudge">-</strong></div>
+      <div class="row"><span class="small">希望段数判定</span><strong id="requestJudge">-</strong></div>
+
+      <div id="noteArea" class="note">※本計算は簡易シミュレーションです。詳細設計・正式能力保証には別途確認が必要です。</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const machines=[
+  {name:"PA-450",maxBoxWeight:5,maxHeight:1200},
+  {name:"PA-700",maxBoxWeight:10,maxHeight:1400},
+  {name:"PA-1000",maxBoxWeight:18,maxHeight:1700}
+];
+
+function g(id){return document.getElementById(id)}
+function n(id){return Number(g(id).value||0)}
+function setStatus(type,msg){g("status").className="status "+type;g("status").textContent=msg}
+
+function bestLayout(boxW,boxD,palletW,palletD,allowRotate,pattern){
+  const normal={count:Math.floor(palletW/boxW)*Math.floor(palletD/boxD),label:`${Math.floor(palletW/boxW)} × ${Math.floor(palletD/boxD)}`,rotated:false};
+  const rotated={count:Math.floor(palletW/boxD)*Math.floor(palletD/boxW),label:`${Math.floor(palletW/boxD)} × ${Math.floor(palletD/boxW)}`,rotated:true};
+  if(pattern==="same"||allowRotate==="no") return normal;
+  return rotated.count>normal.count?rotated:normal;
+}
+
+function recommendMachine(weight,height){
+  return machines.find(m=>weight<=m.maxBoxWeight&&height<=m.maxHeight)||null;
+}
+
+function calc(){
+  const boxW=n("boxW"),boxD=n("boxD"),boxH=n("boxH"),boxWeight=n("boxWeight");
+  const palletW=n("palletW"),palletD=n("palletD"),maxHeight=n("maxHeight"),requestedLayers=n("requestedLayers");
+  const allowRotate=g("allowRotate").value,pattern=g("pattern").value;
+
+  if([boxW,boxD,boxH,boxWeight,palletW,palletD,maxHeight,requestedLayers].some(v=>v<=0)){
+    setStatus("warn","⚠️ 入力値を確認してください。0以下の値は使えません。");
+    return;
+  }
+
+  const layout=bestLayout(boxW,boxD,palletW,palletD,allowRotate,pattern);
+  const perLayer=layout.count;
+  const maxLayers=Math.max(0,Math.floor(maxHeight/boxH));
+  const totalCount=perLayer*maxLayers;
+  const machine=recommendMachine(boxWeight,maxHeight);
+  const requestOk=requestedLayers<=maxLayers;
+
+  g("perLayer").textContent=perLayer;
+  g("maxLayers").textContent=maxLayers;
+  g("totalCount").textContent=totalCount;
+  g("machineName").textContent=machine?machine.name:"該当なし";
+  g("layoutLabel").textContent=perLayer>0?layout.label+" 配置":"配置不可";
+  g("rotationLabel").textContent=layout.rotated?"回転あり採用":"回転なし";
+  g("heightJudge").textContent=maxLayers>=1?`OK（最大 ${maxLayers}段）`:"NG";
+  g("weightJudge").textContent=machine?`OK（${machine.name} 想定）`:"NG";
+  g("requestJudge").textContent=requestOk?`OK（希望 ${requestedLayers}段）`:`NG（希望 ${requestedLayers}段 > 最大 ${maxLayers}段）`;
+
+  if(perLayer===0){
+    setStatus("ng","❌ 箱サイズが大きいため、パレット上に配置できません。");
+    g("noteArea").textContent="パレット寸法に対して箱寸法が大きすぎます。箱の向き、パレットサイズ、搬送条件の再確認が必要です。";
+    return;
+  }
+  if(!machine){
+    setStatus("ng","❌ 重量または高さ条件から、仮の機種マスタでは対応不可です。");
+    g("noteArea").textContent="仮マスタ上の許容範囲を超えています。上位機種・仕様変更・条件見直しをご検討ください。";
+    return;
+  }
+  if(!requestOk){
+    setStatus("warn",`⚠️ 希望 ${requestedLayers}段に対して、簡易計算では最大 ${maxLayers}段です。`);
+    g("noteArea").textContent="段数不足です。箱高さ、最大積載高さ、積み付け条件の見直しにより改善余地がある可能性があります。";
+    return;
+  }
+
+  setStatus("ok",`✅ 積載可能です。概算では ${perLayer}個/段 × ${maxLayers}段 = 合計 ${totalCount}個です。`);
+  g("noteArea").textContent=`簡易判定では ${machine.name} を推奨します。※本計算は概算です。正式にはハンド仕様、ストローク、干渉、搬送姿勢、安全率などの確認が必要です。`;
+}
+
+function resetSample(){
+  g("boxW").value=300; g("boxD").value=200; g("boxH").value=180; g("boxWeight").value=7.5;
+  g("palletW").value=1100; g("palletD").value=1100; g("maxHeight").value=1400; g("requestedLayers").value=5;
+  g("allowRotate").value="yes"; g("pattern").value="best";
+  calc();
+}
+
+["boxW","boxD","boxH","boxWeight","palletW","palletD","maxHeight","requestedLayers","allowRotate","pattern"]
+.forEach(id=>g(id).addEventListener("input",calc));
+
+calc();
+</script>
+</body>
+</html>
