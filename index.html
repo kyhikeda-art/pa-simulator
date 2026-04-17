@@ -1,0 +1,360 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YUSHIN PA 簡易判定シミュレーター</title>
+<style>
+:root {
+  --navy: #0e1e42;
+  --navy-2: #162a59;
+  --red: #b21f3b;
+  --silver: #d8dde6;
+  --bg: #f7f9fc;
+  --card: #ffffff;
+  --text: #172235;
+  --sub: #5f6b81;
+  --line: #dde5ef;
+  --ok: #0b6b4b;
+  --ok-bg: #eaf8f2;
+  --warn: #9b2743;
+  --warn-bg: #fdeff2;
+  --ng: #8a2333;
+  --ng-bg: #fff1f3;
+  --shadow: 0 12px 28px rgba(14, 30, 66, 0.07);
+  --radius: 18px;
+  --box-fill: #eef3fb;
+  --box-stroke: #c8d5ea;
+  --pallet-fill: #f4f7fb;
+  --pallet-stroke: #9eb0cb;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif;
+  background: linear-gradient(180deg, #fbfcfe 0%, #f4f7fb 100%);
+  color: var(--text);
+}
+.wrap { max-width: 1220px; margin: 0 auto; padding: 20px; }
+.hero, .panel {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  box-shadow: var(--shadow);
+}
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 22px 24px;
+  margin-bottom: 18px;
+}
+.brand { display: flex; align-items: center; gap: 18px; }
+.logo-box { min-width: 170px; display: flex; align-items: center; }
+.logo-box img { width: 150px; height: auto; display: block; }
+.hero h1 { margin: 0 0 6px; font-size: 30px; line-height: 1.2; color: var(--navy); }
+.hero p { margin: 0; color: var(--text); opacity: .92; line-height: 1.72; font-weight: 560; }
+.hero-note {
+  max-width: 360px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(14,30,66,.03), rgba(14,30,66,.01));
+  font-size: 12px;
+  color: var(--text);
+  opacity: .92;
+  line-height: 1.75;
+}
+.view { display: none; }
+.view.active { display: block; }
+.grid { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 18px; }
+.panel { padding: 20px; }
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.section-head h2 { margin: 0; font-size: 22px; color: var(--navy); }
+.small { font-size: 12px; color: var(--sub); line-height: 1.6; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field.full { grid-column: 1 / -1; }
+label { display: block; font-size: 13px; font-weight: 750; margin-bottom: 6px; color: var(--navy); }
+input, select, button {
+  width: 100%; font-size: 15px; border-radius: 12px; padding: 12px 13px;
+}
+input, select {
+  border: 1px solid var(--line); background: #fff; color: var(--text); outline: none;
+}
+input:focus, select:focus {
+  border-color: var(--navy-2);
+  box-shadow: 0 0 0 4px rgba(22, 42, 89, 0.08);
+}
+.button-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+button { border: 0; font-weight: 800; cursor: pointer; }
+.btn-primary { background: linear-gradient(135deg, var(--navy), var(--navy-2)); color: #fff; }
+.btn-secondary { background: #eef3f9; color: var(--navy); }
+.btn-outline { background: transparent; color: var(--navy); border: 1px solid var(--line); }
+.status { padding: 15px 16px; border-radius: 16px; font-weight: 800; line-height: 1.6; margin-bottom: 14px; }
+.status.ok { background: var(--ok-bg); color: var(--ok); }
+.status.warn { background: var(--warn-bg); color: var(--warn); }
+.status.ng { background: var(--ng-bg); color: var(--ng); }
+.cards { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; margin: 14px 0 18px; }
+.card {
+  border: 1px solid var(--line); border-radius: 16px; background: #fff; padding: 14px;
+}
+.card .label { font-size: 12px; color: var(--sub); margin-bottom: 8px; }
+.card .value { font-size: 28px; font-weight: 850; line-height: 1.1; color: var(--navy); }
+.card .value.sm { font-size: 22px; }
+.logic-list { display: grid; gap: 8px; margin-bottom: 14px; }
+.logic-row {
+  display: flex; justify-content: space-between; gap: 12px; padding: 10px 12px;
+  border: 1px solid var(--line); border-radius: 12px; background: #fff;
+}
+.logic-row span:first-child { color: var(--sub); font-size: 13px; }
+.machine-table { display: grid; gap: 12px; }
+.machine-card {
+  border: 1px solid var(--line); border-radius: 16px; padding: 14px;
+  background: linear-gradient(180deg, rgba(14,30,66,.02), rgba(14,30,66,.005));
+}
+.machine-top {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px;
+}
+.machine-name { font-size: 18px; font-weight: 850; color: var(--navy); }
+.pill {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 56px;
+  padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 850;
+}
+.pill.ok { background: var(--ok-bg); color: var(--ok); }
+.pill.warn { background: var(--warn-bg); color: var(--warn); }
+.pill.ng { background: var(--ng-bg); color: var(--ng); }
+.machine-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.machine-metric {
+  border: 1px solid var(--line); border-radius: 12px; padding: 10px; background: #fff;
+}
+.machine-metric .k { font-size: 11px; color: var(--sub); margin-bottom: 6px; }
+.machine-metric .v { font-size: 13px; font-weight: 800; }
+.diagram-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+.diagram-card {
+  border: 1px solid var(--line); border-radius: 16px; padding: 14px; background: #fff;
+}
+.diagram-card h3 { margin: 0 0 10px; font-size: 16px; color: var(--navy); }
+.box-guide {
+  min-height: 260px; position: relative; border-radius: 14px;
+  background: linear-gradient(180deg, #f8fafc, #f2f6fb); overflow: hidden;
+  display: flex; align-items: center; justify-content: center; padding: 12px;
+}
+.box-guide img { max-width: 280px; max-height: 220px; width: auto; height: auto; display: block; }
+.pallet-wrap { display: flex; justify-content: center; align-items: center; min-height: 260px; }
+.pallet {
+  position: relative; width: 320px; height: 320px; border: 3px solid var(--pallet-stroke);
+  border-radius: 14px; background: var(--pallet-fill); overflow: hidden;
+}
+.pallet-label {
+  position: absolute; left: 10px; top: 10px; font-size: 11px; color: var(--sub); font-weight: 800;
+}
+.pallet-box {
+  position: absolute; background: var(--box-fill); border: 2px solid var(--box-stroke); border-radius: 8px;
+}
+.pallet-box .flap { position: absolute; background: var(--navy); opacity: .72; }
+.note {
+  margin-top: 14px; padding: 13px 14px; border: 1px dashed var(--line); border-radius: 14px;
+  background: #f9fbfe; color: var(--sub); font-size: 12px; line-height: 1.75;
+}
+.subtle-title { margin: 14px 0 8px; font-size: 13px; font-weight: 850; color: var(--sub); }
+hr.sep { border: none; border-top: 1px solid var(--line); margin: 16px 0; }
+@media (max-width: 980px) {
+  .grid, .diagram-grid, .cards, .machine-grid, .form-grid { grid-template-columns: 1fr; }
+  .hero { flex-direction: column; align-items: stretch; }
+  .hero-note { max-width: none; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <div class="brand">
+      <div class="logo-box">
+        <img src="https://www.yushincompany.jp/files/cmn/img/logo-yushin.svg" alt="YUSHIN" onerror="this.style.display='none';document.getElementById('logoFallback').style.display='inline-flex';">
+        <div id="logoFallback" style="display:none;align-items:center;justify-content:center;min-width:150px;height:44px;padding:0 14px;border:1px solid var(--line);border-radius:12px;color:var(--navy);font-weight:900;letter-spacing:.04em;">YUSHIN</div>
+      </div>
+      <div>
+        <h1>PA 簡易判定シミュレーター</h1>
+        <p>机上計算上の成立見込みを、重量・Y軸・Z軸の簡易ロジックで可視化するローカルHTMLツールです。<br>“できる／できない”の断定ではなく、初期提案時の安心感にロジックを添える用途を想定しています。</p>
+      </div>
+    </div>
+    <div class="hero-note">
+      <strong>運用の前提</strong><br>
+      本ツールは初期接触段階の簡易判定用です。ハンド仕様、把持可否、サイクルタイム、干渉、詳細レイアウトは別途検討対象です。<br>
+      そのため、結果表示は「適合見込みあり / 条件付き / 難しい」を基本表現としています。
+    </div>
+  </div>
+
+  <section id="view-input" class="view active">
+    <div class="grid">
+      <div class="panel">
+        <div class="section-head">
+          <h2>STEP 1｜事前条件入力</h2>
+          <div class="small">客先ヒアリング時に入力する項目</div>
+        </div>
+        <div class="form-grid">
+          <div class="field"><label for="productWeight">製品重量 (kg)</label><input id="productWeight" type="number" step="0.1" value="18"></div>
+          <div class="field"><label for="handWeight">ハンド重量 (kg)</label><input id="handWeight" type="number" step="0.1" value="4"></div>
+          <div class="field"><label for="boxW">箱幅 W (mm)</label><input id="boxW" type="number" value="300"></div>
+          <div class="field"><label for="boxD">箱奥行 D (mm)</label><input id="boxD" type="number" value="200"></div>
+          <div class="field"><label for="boxH">箱高さ H (mm)</label><input id="boxH" type="number" value="180"></div>
+          <div class="field"><label for="flapDirection">フラップ方向</label>
+            <select id="flapDirection">
+              <option value="width">幅方向（W方向）</option>
+              <option value="depth">奥行方向（D方向）</option>
+            </select>
+          </div>
+          <div class="field"><label for="palletW">パレット幅 (mm)</label><input id="palletW" type="number" value="1100"></div>
+          <div class="field"><label for="palletD">パレット奥行 (mm)</label><input id="palletD" type="number" value="1100"></div>
+          <div class="field"><label for="patternMode">積付けパターン</label>
+            <select id="patternMode">
+              <option value="best">最適優先</option>
+              <option value="same">回転なし</option>
+            </select>
+          </div>
+          <div class="field"><label for="allowRotate">箱90°回転</label>
+            <select id="allowRotate">
+              <option value="yes">許可する</option>
+              <option value="no">許可しない</option>
+            </select>
+          </div>
+          <div class="field"><label for="maxStackHeight">最大積み付け高さ (mm)</label><input id="maxStackHeight" type="number" value="2150"></div>
+          <div class="field"><label for="releaseMinHeight">解放下限高さ (mm)</label><input id="releaseMinHeight" type="number" value="200"></div>
+          <div class="field"><label for="deformationMargin">変形リスク分 (mm)</label><input id="deformationMargin" type="number" value="100"></div>
+          <div class="field"><label for="extraZ">追加Z (mm)</label><input id="extraZ" type="number" value="0"></div>
+          <div class="field"><label for="pickupY">受取位置 (mm)</label><input id="pickupY" type="number" value="360"></div>
+          <div class="field"><label for="baseY">基準位置までの距離 (mm)</label><input id="baseY" type="number" value="410"></div>
+          <div class="field"><label for="patternDiffY">パターン差分 (mm)</label><input id="patternDiffY" type="number" value="150"></div>
+          <div class="field"><label for="farthestOffsetY">最遠配置オフセット (mm)</label><input id="farthestOffsetY" type="number" value="570"></div>
+        </div>
+        <div class="button-row">
+          <button class="btn-primary" id="toResultBtn">計算して結果を見る</button>
+          <button class="btn-secondary" id="resetBtn">サンプル条件に戻す</button>
+        </div>
+        <div class="note">
+          ※ 可搬質量は「製品重量 + ハンド重量」で判定します。<br>
+          ※ PA-20 / PA-40 は可搬質量2割UPの条件付き領域を設けています。PA-50LCは標準値のみです。<br>
+          ※ Z軸は「最大積み付け高さ - 解放下限高さ + 変形リスク分 + 追加Z」で簡易計算します。ハンド厚みは未考慮です。<br>
+          ※ Y軸は共有された社内基準に沿い、「受取位置 + 基準位置までの距離 + パターン差分 + 最遠配置オフセット」で簡易計算します。
+        </div>
+      </div>
+      <div class="panel">
+        <div class="section-head">
+          <h2>入力ガイド</h2>
+          <div class="small">寸法定義とフラップ方向の見せ方</div>
+        </div>
+        <div class="diagram-card">
+          <h3>箱寸法ガイド</h3>
+          <div class="box-guide"><img src="box-guide.png" alt="箱寸法とテープ方向のガイド図"></div>
+          <div class="note" id="flapGuideText">本ツールでは、上面テープの向きをフラップ方向の基準として扱います。</div>
+        </div>
+        <div class="diagram-card" style="margin-top:14px">
+          <h3>このツールの役割</h3>
+          <div class="small">
+            ・机上計算上の適合見込みを、客先条件に即してその場で返す<br>
+            ・「なんとなく大丈夫」ではなく、簡易ロジックを裏付けとして見せる<br>
+            ・詳細検討フェーズで条件付きや不可となる場合の落胆を減らすため、最初に“ちゃんとしている会社”という印象を作る
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-result" class="view">
+    <div class="grid">
+      <div class="panel">
+        <div class="section-head">
+          <h2>STEP 2｜判定結果</h2>
+          <div class="small">机上計算上の成立見込み</div>
+        </div>
+        <div id="status" class="status warn">条件を入力して計算してください。</div>
+        <div class="cards">
+          <div class="card"><div class="label">必要可搬質量</div><div id="payloadVal" class="value">-</div></div>
+          <div class="card"><div class="label">必要Yストローク</div><div id="yVal" class="value">-</div></div>
+          <div class="card"><div class="label">必要Zストローク</div><div id="zVal" class="value">-</div></div>
+          <div class="card"><div class="label">推奨機種</div><div id="recommended" class="value sm">-</div></div>
+        </div>
+        <div class="logic-list">
+          <div class="logic-row"><span>重量ロジック</span><strong>製品重量 + ハンド重量</strong></div>
+          <div class="logic-row"><span>Y軸ロジック</span><strong>受取位置 + 基準位置 + パターン差分 + 最遠配置</strong></div>
+          <div class="logic-row"><span>Z軸ロジック</span><strong>最大積付高さ - 解放下限 + 変形リスク分 + 追加Z</strong></div>
+          <div class="logic-row"><span>積付けロジック</span><strong id="layoutSummary">-</strong></div>
+        </div>
+        <div class="subtle-title">機種別判定</div>
+        <div id="machineResults" class="machine-table"></div>
+        <div id="noteArea" class="note">※ ハンド仕様、把持可否、サイクルタイム、干渉は別途詳細検討対象です。</div>
+      </div>
+      <div class="panel">
+        <div class="section-head">
+          <h2>積付けイメージ</h2>
+          <div class="small">1段分の簡易表示</div>
+        </div>
+        <div class="diagram-grid">
+          <div class="diagram-card">
+            <h3>積付けパターン</h3>
+            <div class="pallet-wrap"><div id="pallet" class="pallet"><div class="pallet-label">Pallet</div></div></div>
+            <div class="note" id="patternNote">ここに並び方の説明を表示します。</div>
+          </div>
+          <div class="diagram-card">
+            <h3>箱寸法・フラップ確認</h3>
+            <div class="box-guide"><img src="box-guide.png" alt="箱寸法とテープ方向のガイド図"></div>
+            <div class="note" id="resultFlapText">ここにフラップ方向を表示します。</div>
+          </div>
+        </div>
+        <hr class="sep">
+        <div class="section-head">
+          <h2 style="font-size:18px">その場で微調整</h2>
+          <div class="small">結果画面のまま再計算できます</div>
+        </div>
+        <div class="form-grid">
+          <div class="field"><label for="adjProductWeight">製品重量 (kg)</label><input id="adjProductWeight" type="number" step="0.1"></div>
+          <div class="field"><label for="adjHandWeight">ハンド重量 (kg)</label><input id="adjHandWeight" type="number" step="0.1"></div>
+          <div class="field"><label for="adjBoxH">箱高さ H (mm)</label><input id="adjBoxH" type="number"></div>
+          <div class="field"><label for="adjMaxStackHeight">最大積み付け高さ (mm)</label><input id="adjMaxStackHeight" type="number"></div>
+          <div class="field"><label for="adjPatternDiffY">パターン差分 (mm)</label><input id="adjPatternDiffY" type="number"></div>
+          <div class="field"><label for="adjExtraZ">追加Z (mm)</label><input id="adjExtraZ" type="number"></div>
+        </div>
+        <div class="button-row">
+          <button class="btn-primary" id="recalcBtn">この条件で再計算</button>
+          <button class="btn-outline" id="backBtn">入力画面へ戻る</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+<script>
+const machines = [
+  { name:'PA-20', payloadBase:20, payloadMax:24, yBase:1060, yMax:1690, zBase:1500, zMax:1800, remarks:'可搬2割UPあり / Y・Z延長あり' },
+  { name:'PA-40', payloadBase:40, payloadMax:48, yBase:1460, yMax:2090, zBase:2100, zMax:2400, remarks:'可搬2割UPあり / Y・Z延長あり' },
+  { name:'PA-50LC', payloadBase:50, payloadMax:50, yBase:1460, yMax:1460, zBase:1800, zMax:1800, remarks:'標準値のみ' }
+];
+const ids = ['productWeight','handWeight','boxW','boxD','boxH','palletW','palletD','maxStackHeight','releaseMinHeight','deformationMargin','extraZ','pickupY','baseY','patternDiffY','farthestOffsetY'];
+function g(id){ return document.getElementById(id); }
+function n(id){ return Number(g(id).value || 0); }
+function setView(viewId){ document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); g(viewId).classList.add('active'); }
+function resetSample(){ const sample={productWeight:18,handWeight:4,boxW:300,boxD:200,boxH:180,flapDirection:'width',palletW:1100,palletD:1100,patternMode:'best',allowRotate:'yes',maxStackHeight:2150,releaseMinHeight:200,deformationMargin:100,extraZ:0,pickupY:360,baseY:410,patternDiffY:150,farthestOffsetY:570}; Object.entries(sample).forEach(([k,v])=>g(k).value=v); updateFlapTexts(); syncAdjusters(); }
+function updateFlapTexts(){ const isWidth=g('flapDirection').value==='width'; const text=isWidth ? '現在の設定では、上面テープが幅方向（W方向）に走る前提です。' : '現在の設定では、上面テープが奥行方向（D方向）に走る前提です。'; g('flapGuideText').textContent=text; g('resultFlapText').textContent=text; }
+function judgeRange(value, base, max){ if(value<=base) return {level:'ok',mark:'○',text:'標準範囲内'}; if(value<=max) return {level:'warn',mark:'△',text:'拡張・条件付き対応'}; return {level:'ng',mark:'×',text:'範囲外'}; }
+function chooseLayout(boxW, boxD, palletW, palletD, allowRotate, patternMode){ const normalCols=Math.floor(palletW/boxW), normalRows=Math.floor(palletD/boxD); const normal={cols:normalCols,rows:normalRows,count:normalCols*normalRows,rotated:false,usedW:boxW,usedD:boxD,label:`${normalCols} × ${normalRows}`}; const rotatedCols=Math.floor(palletW/boxD), rotatedRows=Math.floor(palletD/boxW); const rotated={cols:rotatedCols,rows:rotatedRows,count:rotatedCols*rotatedRows,rotated:true,usedW:boxD,usedD:boxW,label:`${rotatedCols} × ${rotatedRows}`}; if(allowRotate==='no'||patternMode==='same') return normal; return rotated.count>normal.count?rotated:normal; }
+function buildMachineResult(machine,payloadJudge,yJudge,zJudge){ const levels=[payloadJudge.level,yJudge.level,zJudge.level]; const overall=levels.includes('ng')?'ng':levels.includes('warn')?'warn':'ok'; return {machine,payloadJudge,yJudge,zJudge,overall,overallText:overall==='ok'?'適合見込みあり':overall==='warn'?'条件付き':'難しい',selectable:overall!=='ng'}; }
+function renderPattern(layout, boxW, boxD, palletW, palletD, flapDirection){ const pallet=g('pallet'); pallet.innerHTML='<div class="pallet-label">Pallet</div>'; if(layout.count<=0){ g('patternNote').textContent='パレット上に配置できません。箱寸法またはパレット寸法を見直してください。'; return; } const pad=18, areaW=320-pad*2, areaH=320-pad*2; const scale=Math.min(areaW/palletW, areaH/palletD); const totalW=layout.usedW*layout.cols*scale, totalH=layout.usedD*layout.rows*scale; const startX=(320-totalW)/2, startY=(320-totalH)/2; for(let r=0;r<layout.rows;r++){ for(let c=0;c<layout.cols;c++){ const box=document.createElement('div'); box.className='pallet-box'; const w=layout.usedW*scale-4, h=layout.usedD*scale-4; box.style.width=`${Math.max(w,18)}px`; box.style.height=`${Math.max(h,18)}px`; box.style.left=`${startX + c*layout.usedW*scale}px`; box.style.top=`${startY + r*layout.usedD*scale}px`; const flap=document.createElement('div'); flap.className='flap'; const effectiveDir=layout.rotated ? (flapDirection==='width'?'depth':'width') : flapDirection; if(effectiveDir==='width'){ flap.style.height='2px'; flap.style.width='60%'; flap.style.left='20%'; flap.style.top='50%'; flap.style.transform='translateY(-50%)'; } else { flap.style.width='2px'; flap.style.height='60%'; flap.style.top='20%'; flap.style.left='50%'; flap.style.transform='translateX(-50%)'; } box.appendChild(flap); pallet.appendChild(box); }} g('patternNote').textContent=`1段 ${layout.count}個（${layout.label}） / ${layout.rotated?'箱を90°回転した配置を採用しています。':'回転なしで配置しています。'}`; }
+function syncAdjusters(){ g('adjProductWeight').value=g('productWeight').value; g('adjHandWeight').value=g('handWeight').value; g('adjBoxH').value=g('boxH').value; g('adjMaxStackHeight').value=g('maxStackHeight').value; g('adjPatternDiffY').value=g('patternDiffY').value; g('adjExtraZ').value=g('extraZ').value; }
+function applyAdjusters(){ g('productWeight').value=g('adjProductWeight').value; g('handWeight').value=g('adjHandWeight').value; g('boxH').value=g('adjBoxH').value; g('maxStackHeight').value=g('adjMaxStackHeight').value; g('patternDiffY').value=g('adjPatternDiffY').value; g('extraZ').value=g('adjExtraZ').value; }
+function calculate(){ const values=ids.map(n); if(values.some(v=>Number.isNaN(v)||v<0)){ g('status').className='status ng'; g('status').textContent='入力値を確認してください。数値項目に不正な値があります。'; return null; } updateFlapTexts(); const productWeight=n('productWeight'), handWeight=n('handWeight'), boxW=n('boxW'), boxD=n('boxD'), boxH=n('boxH'), palletW=n('palletW'), palletD=n('palletD'), maxStackHeight=n('maxStackHeight'), releaseMinHeight=n('releaseMinHeight'), deformationMargin=n('deformationMargin'), extraZ=n('extraZ'), pickupY=n('pickupY'), baseY=n('baseY'), patternDiffY=n('patternDiffY'), farthestOffsetY=n('farthestOffsetY'), flapDirection=g('flapDirection').value, patternMode=g('patternMode').value, allowRotate=g('allowRotate').value; if([boxW,boxD,boxH,palletW,palletD].some(v=>v<=0)){ g('status').className='status ng'; g('status').textContent='箱寸法またはパレット寸法に0以下の値は使えません。'; return null; } const requiredPayload=productWeight+handWeight, requiredY=pickupY+baseY+patternDiffY+farthestOffsetY, requiredZ=maxStackHeight-releaseMinHeight+deformationMargin+extraZ, layout=chooseLayout(boxW,boxD,palletW,palletD,allowRotate,patternMode); g('payloadVal').textContent=`${requiredPayload.toFixed(1)} kg`; g('yVal').textContent=`${requiredY} mm`; g('zVal').textContent=`${requiredZ} mm`; g('layoutSummary').textContent=layout.count>0?`1段 ${layout.count}個 / ${layout.rotated?'回転あり':'回転なし'} / ${layout.label}`:'配置不可'; const results=machines.map(machine=>buildMachineResult(machine,judgeRange(requiredPayload,machine.payloadBase,machine.payloadMax),judgeRange(requiredY,machine.yBase,machine.yMax),judgeRange(requiredZ,machine.zBase,machine.zMax))); const selectable=results.filter(r=>r.selectable); const recommended=selectable[0]||null; g('recommended').textContent=recommended?recommended.machine.name:'該当なし'; g('machineResults').innerHTML=results.map(r=>`<div class="machine-card"><div class="machine-top"><div><div class="machine-name">${r.machine.name}</div><div class="small">${r.machine.remarks}</div></div><div class="pill ${r.overall}">${r.overall==='ok'?'○':r.overall==='warn'?'△':'×'} ${r.overallText}</div></div><div class="machine-grid"><div class="machine-metric"><div class="k">重量判定</div><div class="v">${r.payloadJudge.mark} ${r.payloadJudge.text}</div></div><div class="machine-metric"><div class="k">Y軸判定</div><div class="v">${r.yJudge.mark} ${r.yJudge.text}</div></div><div class="machine-metric"><div class="k">Z軸判定</div><div class="v">${r.zJudge.mark} ${r.zJudge.text}</div></div></div></div>`).join(''); renderPattern(layout,boxW,boxD,palletW,palletD,flapDirection); let statusClass='warn', statusText='条件を確認してください。', note='※ ハンド仕様、把持可否、サイクルタイム、干渉は別途詳細検討対象です。'; if(layout.count<=0){ statusClass='ng'; statusText='パレット寸法に対して箱配置が成立しないため、机上計算上も難しいです。'; note='箱寸法またはパレット寸法を見直してください。積付けパターンが成立していないため、この時点で詳細検討に進みにくい状態です。'; } else if(!recommended){ statusClass='ng'; statusText='机上計算上、この条件では該当機種が見当たりません。'; note='重量・Y軸・Z軸のいずれかが範囲外です。条件変更、上位仕様、レイアウト変更の検討が必要です。'; } else if(recommended.overall==='ok'){ statusClass='ok'; statusText=`適合見込みあり（机上計算）。この条件では ${recommended.machine.name} が第一候補です。`; note='ロジック上は標準範囲内で成立見込みがあります。ただし、ハンド仕様、把持可否、サイクルタイム、干渉は別途詳細検討対象です。'; } else { statusClass='warn'; statusText=`条件付きで適合見込みあり（机上計算）。第一候補は ${recommended.machine.name} です。`; note='重量2割UP領域、またはY/Z延長仕様を含む可能性があります。初期提案の安心感を担保する材料にはなりますが、詳細設計段階で条件付与の可能性があります。'; } g('status').className=`status ${statusClass}`; g('status').textContent=statusText; g('noteArea').textContent=note; syncAdjusters(); return {requiredPayload,requiredY,requiredZ,layout,recommended,results}; }
+g('toResultBtn').addEventListener('click',()=>{ const result=calculate(); if(result) setView('view-result'); });
+g('resetBtn').addEventListener('click',resetSample);
+g('backBtn').addEventListener('click',()=>setView('view-input'));
+g('recalcBtn').addEventListener('click',()=>{ applyAdjusters(); const result=calculate(); if(result) setView('view-result'); });
+g('flapDirection').addEventListener('change',updateFlapTexts);
+resetSample(); calculate();
+</script>
+</body>
+</html>
